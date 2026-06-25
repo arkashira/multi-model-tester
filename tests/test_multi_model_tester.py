@@ -1,61 +1,48 @@
-from multi_model_tester import MultiModelTester, TestCase
+from datetime import datetime, timedelta
+import json
+from multi_model_tester import MultiModelTester, ProviderMetrics
 
-def test_create_test_case():
+def test_record_latency():
     tester = MultiModelTester()
-    prompt = "This is a test prompt"
-    llm_providers = ["LLM provider 1", "LLM provider 2"]
-    test_case = tester.create_test_case(prompt, llm_providers)
-    assert test_case.id == 1
-    assert test_case.prompt == prompt
-    assert test_case.llm_providers == llm_providers
-    assert test_case.version == "v1"
+    start_time = datetime.now()
+    end_time = start_time + timedelta(seconds=1)
+    latency = tester.record_latency('test_provider', start_time, end_time)
+    assert latency == 1.0
 
-def test_get_test_case():
+def test_extract_token_usage():
     tester = MultiModelTester()
-    prompt = "This is a test prompt"
-    llm_providers = ["LLM provider 1", "LLM provider 2"]
-    test_case = tester.create_test_case(prompt, llm_providers)
-    retrieved_test_case = tester.get_test_case(test_case.id)
-    assert retrieved_test_case == test_case
+    provider_metadata = {'token_usage': 20}
+    token_usage = tester.extract_token_usage(provider_metadata)
+    assert token_usage == 20
 
-def test_update_test_case():
+def test_store_metrics():
     tester = MultiModelTester()
-    prompt = "This is a test prompt"
-    llm_providers = ["LLM provider 1", "LLM provider 2"]
-    test_case = tester.create_test_case(prompt, llm_providers)
-    updated_prompt = "This is an updated test prompt"
-    updated_llm_providers = ["LLM provider 3", "LLM provider 4"]
-    updated_test_case = tester.update_test_case(test_case.id, updated_prompt, updated_llm_providers)
-    assert updated_test_case.id == test_case.id
-    assert updated_test_case.prompt == updated_prompt
-    assert updated_test_case.llm_providers == updated_llm_providers
-    assert updated_test_case.version == "v2"
+    provider_name = 'test_provider'
+    latency = 1.0
+    token_usage = 20
+    tester.store_metrics(provider_name, latency, token_usage)
+    assert len(tester.results) == 1
+    assert tester.results[0]['provider_name'] == provider_name
+    assert tester.results[0]['metrics']['latency'] == latency
+    assert tester.results[0]['metrics']['token_usage'] == token_usage
 
-def test_delete_test_case():
+def test_display_results():
     tester = MultiModelTester()
-    prompt = "This is a test prompt"
-    llm_providers = ["LLM provider 1", "LLM provider 2"]
-    test_case = tester.create_test_case(prompt, llm_providers)
-    tester.delete_test_case(test_case.id)
-    assert len(tester.test_cases) == 0
+    provider_name = 'test_provider'
+    latency = 1.0
+    token_usage = 20
+    tester.store_metrics(provider_name, latency, token_usage)
+    results = tester.display_results()
+    assert json.loads(results)[0]['provider_name'] == provider_name
+    assert json.loads(results)[0]['metrics']['latency'] == latency
+    assert json.loads(results)[0]['metrics']['token_usage'] == token_usage
 
-def test_compare_llm_providers():
+def test_test_provider():
     tester = MultiModelTester()
-    prompt = "This is a test prompt"
-    llm_providers = ["LLM provider 1", "LLM provider 2"]
-    test_case = tester.create_test_case(prompt, llm_providers)
-    comparison_result = tester.compare_llm_providers(test_case.id)
-    assert comparison_result["test_case_id"] == test_case.id
-    assert comparison_result["prompt"] == prompt
-    assert comparison_result["llm_providers"] == llm_providers
-    assert comparison_result["comparison_result"] == "LLM provider 1 is better"
-
-def test_create_test_case_with_less_than_two_llm_providers():
-    tester = MultiModelTester()
-    prompt = "This is a test prompt"
-    llm_providers = ["LLM provider 1"]
-    try:
-        tester.create_test_case(prompt, llm_providers)
-        assert False, "Expected ValueError to be raised"
-    except ValueError:
-        assert True
+    provider_name = 'test_provider'
+    provider_metadata = {}
+    tester.test_provider(provider_name, provider_metadata)
+    assert len(tester.results) == 1
+    assert tester.results[0]['provider_name'] == provider_name
+    assert tester.results[0]['metrics']['latency'] > 0
+    assert tester.results[0]['metrics']['token_usage'] == 10

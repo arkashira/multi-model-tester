@@ -1,2 +1,11 @@
-# Test Suite Management
-This project provides a simple test suite management system. It allows users to define test cases with input prompts and expected outputs, and store them with metadata including timestamp and author. Test cases can be tagged and organized into logical groups, and support version history with rollback capability.
+# Multi-Model Tester
+A tool for testing and evaluating the performance of multiple machine learning models.
+
+## Usage
+1. Create an instance of the `MultiModelTester` class.
+2. Call the `test_provider` method to test a provider.
+3. Call the `display_results` method to display the test results.
+
+## Requirements
+* Python 3.8 or later
+* No external dependencies required

@@ -1,57 +1,40 @@
 import json
 from dataclasses import dataclass
-from datetime import datetime
-from typing import List
+from datetime import datetime, timedelta
+import time
 
 @dataclass
-class TestCase:
-    id: int
-    prompt: str
-    llm_providers: List[str]
-    version: str
+class ProviderMetrics:
+    latency: float
+    token_usage: int
 
 class MultiModelTester:
     def __init__(self):
-        self.test_cases = []
-        self.version_counter = 1
+        self.results = []
 
-    def create_test_case(self, prompt: str, llm_providers: List[str]) -> TestCase:
-        if len(llm_providers) < 2:
-            raise ValueError("At least two LLM providers are required")
-        test_case = TestCase(
-            id=len(self.test_cases) + 1,
-            prompt=prompt,
-            llm_providers=llm_providers,
-            version=f"v{self.version_counter}"
-        )
-        self.test_cases.append(test_case)
-        self.version_counter += 1
-        return test_case
+    def record_latency(self, provider_name, start_time, end_time):
+        latency = (end_time - start_time).total_seconds()
+        return latency
 
-    def get_test_case(self, test_case_id: int) -> TestCase:
-        for test_case in self.test_cases:
-            if test_case.id == test_case_id:
-                return test_case
-        raise ValueError("Test case not found")
+    def extract_token_usage(self, provider_metadata):
+        if 'token_usage' in provider_metadata:
+            return provider_metadata['token_usage']
+        else:
+            # Estimate token usage via tokenizers (for simplicity, assume 10 tokens per request)
+            return 10
 
-    def update_test_case(self, test_case_id: int, prompt: str, llm_providers: List[str]) -> TestCase:
-        test_case = self.get_test_case(test_case_id)
-        test_case.prompt = prompt
-        test_case.llm_providers = llm_providers
-        test_case.version = f"v{self.version_counter}"
-        self.version_counter += 1
-        return test_case
+    def store_metrics(self, provider_name, latency, token_usage):
+        metrics = ProviderMetrics(latency, token_usage)
+        self.results.append({'provider_name': provider_name, 'metrics': metrics.__dict__})
 
-    def delete_test_case(self, test_case_id: int) -> None:
-        self.test_cases = [test_case for test_case in self.test_cases if test_case.id != test_case_id]
+    def display_results(self):
+        return json.dumps(self.results, indent=4)
 
-    def compare_llm_providers(self, test_case_id: int) -> dict:
-        test_case = self.get_test_case(test_case_id)
-        # Simulate comparison of LLM providers
-        comparison_result = {
-            "test_case_id": test_case_id,
-            "prompt": test_case.prompt,
-            "llm_providers": test_case.llm_providers,
-            "comparison_result": "LLM provider 1 is better"
-        }
-        return comparison_result
+    def test_provider(self, provider_name, provider_metadata):
+        start_time = datetime.now()
+        # Simulate request processing time (for simplicity, assume 1 second)
+        time.sleep(1)
+        end_time = datetime.now()
+        latency = self.record_latency(provider_name, start_time, end_time)
+        token_usage = self.extract_token_usage(provider_metadata)
+        self.store_metrics(provider_name, latency, token_usage)
