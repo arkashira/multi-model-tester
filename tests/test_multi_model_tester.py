@@ -1,48 +1,32 @@
-from datetime import datetime, timedelta
-import json
-from multi_model_tester import MultiModelTester, ProviderMetrics
+from multi_model_tester import MultiModelTester, TestResult
 
-def test_record_latency():
+def test_run_test():
     tester = MultiModelTester()
-    start_time = datetime.now()
-    end_time = start_time + timedelta(seconds=1)
-    latency = tester.record_latency('test_provider', start_time, end_time)
-    assert latency == 1.0
+    test_case = "test_case_1"
+    results = tester.run_test(test_case)
+    assert len(results) == 2
+    for provider, result in results.items():
+        assert isinstance(result, TestResult)
+        assert result.response.startswith("Response from")
+        assert result.latency > 0
+        assert result.token_usage > 0
 
-def test_extract_token_usage():
+def test_call_provider_client():
     tester = MultiModelTester()
-    provider_metadata = {'token_usage': 20}
-    token_usage = tester.extract_token_usage(provider_metadata)
-    assert token_usage == 20
+    test_case = "test_case_1"
+    provider = "provider1"
+    result = tester.call_provider_client(test_case, provider)
+    assert isinstance(result, TestResult)
+    assert result.response == f"Response from {provider} for {test_case}"
+    assert result.latency == 0.5
+    assert result.token_usage == 10
 
-def test_store_metrics():
+def test_store_results_in_database():
     tester = MultiModelTester()
-    provider_name = 'test_provider'
-    latency = 1.0
-    token_usage = 20
-    tester.store_metrics(provider_name, latency, token_usage)
-    assert len(tester.results) == 1
-    assert tester.results[0]['provider_name'] == provider_name
-    assert tester.results[0]['metrics']['latency'] == latency
-    assert tester.results[0]['metrics']['token_usage'] == token_usage
-
-def test_display_results():
-    tester = MultiModelTester()
-    provider_name = 'test_provider'
-    latency = 1.0
-    token_usage = 20
-    tester.store_metrics(provider_name, latency, token_usage)
-    results = tester.display_results()
-    assert json.loads(results)[0]['provider_name'] == provider_name
-    assert json.loads(results)[0]['metrics']['latency'] == latency
-    assert json.loads(results)[0]['metrics']['token_usage'] == token_usage
-
-def test_test_provider():
-    tester = MultiModelTester()
-    provider_name = 'test_provider'
-    provider_metadata = {}
-    tester.test_provider(provider_name, provider_metadata)
-    assert len(tester.results) == 1
-    assert tester.results[0]['provider_name'] == provider_name
-    assert tester.results[0]['metrics']['latency'] > 0
-    assert tester.results[0]['metrics']['token_usage'] == 10
+    test_case = "test_case_1"
+    results = {
+        "provider1": TestResult("Response from provider1", 0.5, 10),
+        "provider2": TestResult("Response from provider2", 0.6, 20)
+    }
+    tester.store_results_in_database(test_case, results)
+    # No assertions, just verify that the method runs without errors

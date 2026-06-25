@@ -11,4 +11,4 @@ description = ""
 python = "^3.8"
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2.5"
+pytest = "^6.2"

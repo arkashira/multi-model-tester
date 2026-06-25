@@ -1,11 +1,8 @@
 # Multi-Model Tester
-A tool for testing and evaluating the performance of multiple machine learning models.
+
+A Python project that simulates a multi-model tester.
 
 ## Usage
-1. Create an instance of the `MultiModelTester` class.
-2. Call the `test_provider` method to test a provider.
-3. Call the `display_results` method to display the test results.
 
-## Requirements
-* Python 3.8 or later
-* No external dependencies required
+1. Run the tests using `pytest`
+2. Use the `MultiModelTester` class to run tests and store results in a database

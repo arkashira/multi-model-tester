@@ -1,40 +1,34 @@
 import json
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-import time
+from typing import List, Dict
 
 @dataclass
-class ProviderMetrics:
+class TestResult:
+    response: str
     latency: float
     token_usage: int
 
 class MultiModelTester:
     def __init__(self):
-        self.results = []
+        self.providers = ["provider1", "provider2"]
+        self.test_results = {}
 
-    def record_latency(self, provider_name, start_time, end_time):
-        latency = (end_time - start_time).total_seconds()
-        return latency
+    def run_test(self, test_case: str) -> Dict[str, TestResult]:
+        self.test_results[test_case] = {}
+        for provider in self.providers:
+            result = self.call_provider_client(test_case, provider)
+            self.test_results[test_case][provider] = result
+        return self.test_results[test_case]
 
-    def extract_token_usage(self, provider_metadata):
-        if 'token_usage' in provider_metadata:
-            return provider_metadata['token_usage']
-        else:
-            # Estimate token usage via tokenizers (for simplicity, assume 10 tokens per request)
-            return 10
+    def call_provider_client(self, test_case: str, provider: str) -> TestResult:
+        # Simulate calling a provider client
+        response = f"Response from {provider} for {test_case}"
+        latency = 0.5
+        token_usage = 10
+        return TestResult(response, latency, token_usage)
 
-    def store_metrics(self, provider_name, latency, token_usage):
-        metrics = ProviderMetrics(latency, token_usage)
-        self.results.append({'provider_name': provider_name, 'metrics': metrics.__dict__})
-
-    def display_results(self):
-        return json.dumps(self.results, indent=4)
-
-    def test_provider(self, provider_name, provider_metadata):
-        start_time = datetime.now()
-        # Simulate request processing time (for simplicity, assume 1 second)
-        time.sleep(1)
-        end_time = datetime.now()
-        latency = self.record_latency(provider_name, start_time, end_time)
-        token_usage = self.extract_token_usage(provider_metadata)
-        self.store_metrics(provider_name, latency, token_usage)
+    def store_results_in_database(self, test_case: str, results: Dict[str, TestResult]) -> None:
+        # Simulate storing results in a database
+        print(f"Storing results for {test_case} in database:")
+        for provider, result in results.items():
+            print(f"Provider: {provider}, Response: {result.response}, Latency: {result.latency}, Token Usage: {result.token_usage}")
